@@ -84,7 +84,6 @@ buckets = []
 node['s3fs']['buckets'].each do |bucketname, bucket|
   buckets << {
     :name => bucketname,
-    :path => bucket['mount_root']
     :access_key => bucket['access_key_id'],
     :secret_key => bucket['secret_access_key']
   }
@@ -99,26 +98,27 @@ template "/etc/passwd-s3fs" do
 end
 
 buckets.each do |bucket|
-  directory bucket[:path] do
-    owner     "root"
-    group     "root"
-    mode      0777
+  pp bucket
+  directory "#{node['s3fs']['mount_root']}/#{bucket[:name]}" do
+    owner     bucket['owner'] ? bucket['owner'] : 'www-data'
+    group     bucket['group'] ? bucket['group'] : 'www-data'
+    mode      0755
     recursive true
     not_if do
-      File.exists?(bucket[:path])
+      File.exists?("#{node['s3fs']['mount_root']}/#{bucket[:name]}")
     end
   end
 
-  mount bucket[:path] do
+  mount "#{node['s3fs']['mount_root']}/#{bucket[:name]}" do
     device "s3fs##{bucket[:name]}"
     fstype "fuse"
     options node['s3fs']['options']
     dump 0
     pass 0
     action [:enable, :mount]
-    not_if "grep -qs '#{bucket[:path]} ' /proc/mounts"
+    not_if "grep -qs '#{node['s3fs']['mount_root']}/#{bucket[:name]} ' /proc/mounts"
   end
 end
 
 # remove bucket information from the node data
-node.set['s3fs']['buckets'] = []
+node.set['s3fs']['buckets'] = {}
