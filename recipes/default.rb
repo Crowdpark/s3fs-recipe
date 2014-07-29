@@ -59,8 +59,8 @@ if %w{centos redhat amazon}.include?(node['platform'])
   end
 end
 
-remote_file "#{Chef::Config[:file_cache_path]}/s3fs-#{ node['s3fs']['version'] }.tar.gz" do
-  source "http://s3fs.googlecode.com/files/s3fs-#{ node['s3fs']['version'] }.tar.gz"
+remote_file "#{Chef::Config[:file_cache_path]}/s3fs-fuse-#{ node['s3fs']['version'] }.tar.gz" do
+  source "https://github.com/s3fs-fuse/s3fs-fuse/archive/v#{ node['s3fs']['version'] }.tar.gz"
   mode 0644
   action :create_if_missing
 end
@@ -69,8 +69,9 @@ bash "install s3fs" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
   export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/lib64/pkgconfig
-  tar zxvf s3fs-#{ node['s3fs']['version'] }.tar.gz
-  cd s3fs-#{ node['s3fs']['version'] }
+  tar zxvf s3fs-fuse-#{ node['s3fs']['version'] }.tar.gz
+  cd s3fs-fuse-#{ node['s3fs']['version'] }
+  ./autogen.sh
   ./configure --prefix=/usr
   make
   make install
@@ -98,7 +99,6 @@ template "/etc/passwd-s3fs" do
 end
 
 buckets.each do |bucket|
-  pp bucket
   directory "#{node['s3fs']['mount_root']}/#{bucket[:name]}" do
     owner     bucket['owner'] ? bucket['owner'] : 'www-data'
     group     bucket['group'] ? bucket['group'] : 'www-data'

@@ -16,7 +16,7 @@ when "debian", "ubuntu"
 end
 
 default["s3fs"]["mount_root"] = '/mnt'
-default["s3fs"]["version"] = "1.74"
+default["s3fs"]["version"] = "1.77"
 default["s3fs"]["options"] = 'allow_other,use_cache=/tmp'
 
 default["s3fs"]["buckets"] = {}
